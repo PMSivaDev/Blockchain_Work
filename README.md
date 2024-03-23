@@ -1,2 +1,2 @@
 # Blockchain_Work
-Small tasks, trial projects, learning in  blockchain
+A collection of Small tasks, trial projects, learning in  blockchain
