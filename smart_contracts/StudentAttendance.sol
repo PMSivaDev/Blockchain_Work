@@ -12,15 +12,17 @@ contract student_attendance
         uint attendance;
     }
     mapping(address => Student) private students;
-    address[] private studentsList;
-    
+    address[] private studentsList;         // Registered students list
+    //Student[] private studentsListAttending;// list of students attending current session
+    string[] private eMailsOfstudentsAttending;// list of emails of students attending current session
     uint private sessionStartTime;
     uint private sessionEndTime;
     uint private numOfSessions;
 
     constructor()
     {
-        admin_address = msg.sender;        
+        admin_address = msg.sender;
+        // eMailsOfstudentsAttending = new string[];        
     }
     function getOwner() public view returns(address)
     {
@@ -48,6 +50,12 @@ contract student_attendance
         require(msg.sender != admin_address , "admin can not access/call this function");
         _;
     }
+
+    modifier isSessionActive
+    {
+        require(sessionEndTime > block.timestamp , " No session is going on actively");
+        _;
+    }
     event studentRegnCompleted ( address currentStudentAddress, string currentStudentEmail);
 
     function registerStudent(string memory _email) public notOnlyOwner
@@ -66,12 +74,19 @@ contract student_attendance
         sessionStartTime = block.timestamp;
         sessionEndTime = sessionStartTime + 2 hours;
         numOfSessions++;
+        // This is a new session. Clear the prev session students list
+        delete eMailsOfstudentsAttending; 
     }
     
-    function markAttendance() public notOnlyOwner onlyRegisteredStudent 
+    function EndSession() public onlyOwner isSessionActive
     {
-        require(sessionEndTime > block.timestamp , " No session is going on actively");
+        sessionEndTime = block.timestamp;
+    }
+
+    function markAttendance() public notOnlyOwner onlyRegisteredStudent isSessionActive
+    {
         students[msg.sender].attendance++;
+        eMailsOfstudentsAttending.push(students[msg.sender].email);
     }
 
     function getTotalSessions() public view returns(uint)
@@ -81,5 +96,9 @@ contract student_attendance
     function getStudentAttendance() public view returns(uint)
     {
         return students[msg.sender].attendance;
+    }
+    function getAllStudentDetailsOfThisSession() public view onlyOwner returns(string[] memory) 
+    {        
+        return eMailsOfstudentsAttending;
     }
 }
